@@ -6,17 +6,13 @@ import { v4 as uuidv4 } from "uuid";
 import GradesContext from "./grade-context";
 
 const GradesProvider = ({ children }) => {
-  // We store the main data structure here
+  //  store the main data structure in local storage
   const [years, setYears] = useLocalStorage("gwa_data_v2", []);
-
-  // ==============================
-  // 1. DATA MANIPULATION (CRUD)
-  // ==============================
 
   const addYear = (levelLabel) => {
     const newYear = {
       id: uuidv4(),
-      level: levelLabel, // e.g., "1st Year", "2nd Year"
+      level: levelLabel,
       semesters: [],
     };
     setYears((prev) => [...prev, newYear]);
@@ -31,7 +27,7 @@ const GradesProvider = ({ children }) => {
   const addSemester = (yearId, termLabel) => {
     const newSemester = {
       id: uuidv4(),
-      term: termLabel, // e.g., "1st Semester", "Summer"
+      term: termLabel,
       subjects: [],
     };
 
@@ -62,7 +58,6 @@ const GradesProvider = ({ children }) => {
   };
 
   const addSubject = (yearId, semesterId, subject) => {
-    // Default values to prevent errors if fields are empty
     const newSubject = {
       id: uuidv4(),
       name: subject.name || "New Subject",
@@ -72,12 +67,12 @@ const GradesProvider = ({ children }) => {
 
     setYears((prev) =>
       prev.map((year) => {
-        if (year.id !== yearId) return year; // Optimization: skip irrelevant years
+        if (year.id !== yearId) return year;
 
         return {
           ...year,
           semesters: year.semesters.map((sem) => {
-            if (sem.id !== semesterId) return sem; // Optimization: skip irrelevant sems
+            if (sem.id !== semesterId) return sem;
 
             return {
               ...sem,
@@ -122,7 +117,6 @@ const GradesProvider = ({ children }) => {
               subjects: sem.subjects.map((sub) => {
                 if (sub.id !== subjectId) return sub;
 
-                // Normalize numeric fields so calculations are always done on numbers
                 let normalizedValue = value;
                 if (field === "units" || field === "grade") {
                   const parsed = parseFloat(value);
@@ -149,13 +143,9 @@ const GradesProvider = ({ children }) => {
     }
   };
 
-  // ==============================
-  // 2. CALCULATION LOGIC (basic averages)
-  // ==============================
+  //  CALCULATION LOGIC (basic averages)
 
-  // 1. Per-semester GWA: simple average of the already-computed subject grades.
-  //    We DO NOT use units here because each entered grade is already a
-  //    computed/official grade for that subject or semester.
+  //    Per-subject GWA: average of all subjects in a semester.
   //    GWA = (Σ grade_i) / (number of graded subjects),
   //    skipping subjects with 0/NaN grade (treated as "not yet graded").
   const calculateGWA = useCallback((subjects) => {
@@ -178,10 +168,8 @@ const GradesProvider = ({ children }) => {
     return total / count;
   }, []);
 
-  // 2. Per-year GWA: average of semester GWAs for this year.
-  //    IMPORTANT: we first truncate each semester GWA to 2 decimal places
-  //    (to match the semester display like 1.54, 1.60, 1.20), then average
-  //    those truncated values WITHOUT further rounding.
+  //    Per-year GWA: average of semester GWAs for this year.
+  //    We skip years with no semesters.
   const getYearGWA = useCallback(
     (yearId) => {
       const year = years.find((y) => y.id === yearId);
@@ -191,7 +179,7 @@ const GradesProvider = ({ children }) => {
         .map((sem) => {
           const raw = calculateGWA(sem.subjects);
           if (raw <= 0 || Number.isNaN(raw)) return 0;
-          // Truncate to 2 decimals (no rounding), e.g. 1.546 -> 1.54
+
           const truncated = Math.trunc(raw * 100) / 100;
           return truncated;
         })
@@ -205,10 +193,8 @@ const GradesProvider = ({ children }) => {
     [years, calculateGWA],
   );
 
-  // 3. Overall GWA: average of year GWAs.
-  //    IMPORTANT: we first truncate each year GWA to 3 decimal places
-  //    (to match the year badge display like 1.440, 1.495), then average
-  //    those truncated values WITHOUT further rounding.
+  //     Overall GWA: average of year GWAs.
+  //     We skip years with no semesters.
   const getOverallGWA = useCallback(() => {
     if (!years || years.length === 0) return 0;
 
@@ -217,7 +203,7 @@ const GradesProvider = ({ children }) => {
         if (!y.semesters || y.semesters.length === 0) return 0;
         const rawYear = getYearGWA(y.id);
         if (rawYear <= 0 || Number.isNaN(rawYear)) return 0;
-        // Truncate to 3 decimals (no rounding), e.g. 1.4719 -> 1.471
+
         const truncated = Math.trunc(rawYear * 1000) / 1000;
         return truncated;
       })
@@ -229,12 +215,8 @@ const GradesProvider = ({ children }) => {
     return totalYears / yearGwas.length;
   }, [years, getYearGWA]);
 
-  // ==============================
-  // 3. EXPORT
-  // ==============================
-
   const contextValue = {
-    years, // The main data
+    years,
     addYear,
     deleteYear,
     addSemester,
@@ -243,9 +225,9 @@ const GradesProvider = ({ children }) => {
     removeSubject,
     updateSubject,
     clearAll,
-    calculateGWA, // Use for Semester cards
-    getYearGWA, // Use for Year headers
-    getOverallGWA, // Use for Main Header/Summary
+    calculateGWA,
+    getYearGWA,
+    getOverallGWA,
   };
 
   return (

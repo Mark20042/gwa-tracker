@@ -1,7 +1,7 @@
 import { createContext } from "react";
 
 const GradesContext = createContext({
-    data: [], // Array of Years
+    data: [], 
     addYear: () => { },
     deleteYear: () => { },
     addSemester: () => { },
