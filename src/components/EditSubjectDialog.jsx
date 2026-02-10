@@ -113,8 +113,11 @@ const EditSubjectDialog = ({ yearId, semesterId, subject }) => {
                             }
                             className="col-span-3"
                             placeholder="e.g. 1.25"
-                            required
+                            required={false}
                         />
+                        <p className="text-[10px] text-muted-foreground col-start-2 col-span-3 -mt-2">
+                            Leave empty or input 0 if not yet graded.
+                        </p>
                     </div>
                     <DialogFooter>
                         <Button type="submit">Save Changes</Button>

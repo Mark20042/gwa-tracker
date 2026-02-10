@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import GradeProvider from "./store/grade-provider";
 import GradesContext from "./store/grade-context";
 import { Toaster } from "sonner";
@@ -6,16 +6,12 @@ import Header from "./components/Header";
 import Controls from "./components/Controls";
 import YearList from "./components/YearList";
 
+
 const GwaDashboard = () => {
   // ... existing hooks
-  const { data, calculateGWA } = useContext(GradesContext);
+  const { getOverallGWA } = useContext(GradesContext);
 
-  const overallGwa = useMemo(() => {
-    const allSubjects = data.flatMap((year) =>
-      year.semesters.flatMap((sem) => sem.subjects),
-    );
-    return calculateGWA(allSubjects);
-  }, [data, calculateGWA]);
+  const overallGwa = getOverallGWA();
 
   return (
     <div className="min-h-screen bg-background">

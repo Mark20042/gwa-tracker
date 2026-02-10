@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo } from "react";
 import GradesContext from "../store/grade-context";
 import {
     Card,
@@ -20,6 +20,23 @@ import {
 import { Trash2, Plus, Pencil, Check, X, PlusCircle } from "lucide-react";
 import AddSubjectDialog from "./AddSubjectDialog";
 import EditSubjectDialog from "./EditSubjectDialog";
+
+// Truncate to 2 decimal places with NO rounding
+const formatGwaNoRound = (value) => {
+    const num = typeof value === "number" ? value : parseFloat(value);
+    if (isNaN(num) || num <= 0) return "N/A";
+
+    const truncated = Math.trunc(num * 100) / 100;
+    const str = truncated.toString();
+
+    if (!str.includes(".")) return `${str}.00`;
+
+    const [intPart, decPart] = str.split(".");
+    if (decPart.length === 1) return `${intPart}.${decPart}0`;
+    if (decPart.length >= 2) return `${intPart}.${decPart.slice(0, 2)}`;
+
+    return `${intPart}.${decPart}`;
+};
 
 const SemesterCard = ({ yearId, semester }) => {
     const {
@@ -148,7 +165,7 @@ const SemesterCard = ({ yearId, semester }) => {
                 <p className="text-[10px] sm:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                     {semester.term} General Weighted Average :
                     <span className="font-black text-base sm:text-xl text-primary">
-                        {gwa.toFixed(2)}
+                        {formatGwaNoRound(gwa)}
                     </span>
                 </p>
             </CardFooter>

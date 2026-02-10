@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import GradesContext from "../store/grade-context";
 import SemesterCard from "./SemesterCard";
 import AddSemesterDialog from "./AddSemesterDialog";
@@ -6,14 +6,28 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
-const YearCard = ({ year }) => {
-    const { deleteYear, calculateGWA } = useContext(GradesContext);
+// Truncate to 3 decimal places with NO rounding
+const formatGwaNoRound = (value) => {
+    const num = typeof value === "number" ? value : parseFloat(value);
+    if (isNaN(num) || num <= 0) return null;
 
-    const yearGwa = useMemo(() => {
-        // Collect all subjects from all semesters in this year
-        const allSubjects = year.semesters.flatMap((sem) => sem.subjects);
-        return calculateGWA(allSubjects);
-    }, [year.semesters, calculateGWA]);
+    const truncated = Math.trunc(num * 1000) / 1000;
+    const str = truncated.toString();
+
+    if (!str.includes(".")) return `${str}.000`;
+
+    const [intPart, decPart] = str.split(".");
+    if (decPart.length === 1) return `${intPart}.${decPart}00`;
+    if (decPart.length === 2) return `${intPart}.${decPart}0`;
+    if (decPart.length >= 3) return `${intPart}.${decPart.slice(0, 3)}`;
+
+    return `${intPart}.${decPart}`;
+};
+
+const YearCard = ({ year }) => {
+    const { deleteYear, getYearGWA } = useContext(GradesContext);
+    const yearGwa = getYearGWA(year.id);
+    const formattedYearGwa = formatGwaNoRound(yearGwa);
 
     return (
         <Card className="w-full bg-slate-50 dark:bg-slate-900 border-2">
@@ -26,13 +40,13 @@ const YearCard = ({ year }) => {
                         </CardTitle>
                     </div>
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
-                        {yearGwa > 0 && (
+                        {formattedYearGwa && (
                             <div className="flex items-center justify-between w-full md:w-auto bg-card px-4 py-2 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(255,255,255,0.03)] border animate-in fade-in zoom-in duration-300">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mr-2">
                                     {year.level} Average:
                                 </span>
                                 <span className="text-lg font-black text-primary">
-                                    {yearGwa.toFixed(2)}
+                                    {formattedYearGwa}
                                 </span>
                             </div>
                         )}

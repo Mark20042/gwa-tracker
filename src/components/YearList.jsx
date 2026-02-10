@@ -4,9 +4,9 @@ import YearCard from "./YearCard";
 import { Plus } from "lucide-react";
 
 const YearList = () => {
-    const { data } = useContext(GradesContext);
+    const { years } = useContext(GradesContext);
 
-    if (data.length === 0) {
+    if (years.length === 0) {
         return (
             <div className="text-center py-20 bg-muted/20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center">
                 <div className="rounded-full bg-muted p-4 mb-4">
@@ -24,7 +24,7 @@ const YearList = () => {
 
     return (
         <div className="space-y-6">
-            {data
+            {years
                 .sort((a, b) => a.level.localeCompare(b.level))
                 .map((year) => (
                     <YearCard key={year.id} year={year} />
